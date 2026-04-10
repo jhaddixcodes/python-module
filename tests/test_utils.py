@@ -1,7 +1,7 @@
 import pytest
 
 import qbreader._api_utils as api_utils
-from qbreader.types import Category, Difficulty, Subcategory
+from qbreader.types import Category, Difficulty, Subcategory, AlternateSubcategory
 from tests import assert_exception, assert_warning
 
 
@@ -176,8 +176,11 @@ class TestNormalization:
     def test_normalize_subcat_warning(self, subcat, warning):
         assert assert_warning(api_utils.normalize_cat, warning, subcat) == ""
 
+class TestMiscUtil:
+    """Test util functions that don't fall under normalization"""
+
     @pytest.mark.parametrize(
-        "dict, expected",
+        "dictionary, expected",
         [
             ({"a": 1, "b": 2, "c": 3}, {"a": 1, "b": 2, "c": 3}),
             ({"a": 1, "b": None, "c": 3}, {"a": 1, "c": 3}),
@@ -188,5 +191,24 @@ class TestNormalization:
             ),
         ],
     )
-    def test_prune_none(self, dict, expected):
-        assert api_utils.prune_none(dict) == expected
+    def test_prune_none(self, dictionary, expected):
+        assert api_utils.prune_none(dictionary) == expected
+
+    @pytest.mark.parametrize(
+        "typed_alt_subcat, expected",
+        [
+            (AlternateSubcategory.ASTRONOMY, (None, Subcategory.OTHER_SCIENCE)),
+            (AlternateSubcategory.ARCHITECTURE, (None, Subcategory.OTHER_FINE_ARTS)),
+            (AlternateSubcategory.ANTHROPOLOGY, (None, Subcategory.SOCIAL_SCIENCE)),
+            (AlternateSubcategory.DRAMA, (Category.LITERATURE, None)),
+            (AlternateSubcategory.BELIEFS, (None, None)),
+            (AlternateSubcategory.PRACTICES, (None, None)),
+            (AlternateSubcategory.MISC_ARTS, (None, Subcategory.OTHER_FINE_ARTS)),
+            (AlternateSubcategory.MISC_LITERATURE, (Category.LITERATURE, None)),
+            (AlternateSubcategory.MISC_SCIENCE, (None, Subcategory.OTHER_SCIENCE)),
+            (AlternateSubcategory.OTHER_SOCIAL_SCIENCE, (None, Subcategory.SOCIAL_SCIENCE))
+        ]
+    )
+    def test_category_correspondence(self, typed_alt_subcat, expected):
+        assert api_utils.category_correspondence(typed_alt_subcat) == expected
+
