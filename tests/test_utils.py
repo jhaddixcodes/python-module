@@ -180,11 +180,38 @@ class TestNormalization:
         "cats, subcats, alt_subcats, expected",
         [
             (None, None, None, ("", "", "")),
-            (["Literature", "History"], ["American History"], ["Drama"], ("Literature,History", "American History", "Drama")),
+            ([], [], [], ("", "", "")),
+            (None, None, "Beliefs", ("", "", "Beliefs")),
+            (None, None, "Drama", ("Literature", "", "Drama")),
+            (None, None, "Jazz", ("", "Other Fine Arts", "Jazz")),
+            ("History", None, None, ("History", "", "")),
+            (["History", "Literature"], None, None, ("History,Literature", "", "")),
+            (None, "Other Science", None, ("", "Other Science", "")),
+            (None, ["Other Science", "Sports"], None, ("", "Other Science,Sports", "")),
+            (None, None, ["Astronomy", "Earth Science"], ("", "Other Science", "Astronomy,Earth Science")),
+            (
+                    ["Social Science"],
+                    ["Television"],
+                    ["Beliefs", "Drama", "Misc Science"],
+                    ("Social Science,Literature", "Television,Other Science", "Beliefs,Drama,Misc Science"),
+            ),
+            (["History", "History", "History", "History", "History"], [], [], ("History", "", "")),
         ],
     )
     def test_normalize_cats(self, cats, subcats, alt_subcats, expected):
         assert [sorted(tuple(x)) for x in api_utils.normalize_cats(cats, subcats, alt_subcats)] == [sorted(tuple(x)) for x in expected]
+
+    @pytest.mark.parametrize(
+        "cats, subcats, alt_subcats, exception",
+        [
+            (None, None, "", ValueError),
+            ("Science ", None, [], ValueError),
+            ("Geography", [None], [], ValueError),
+            (["History", ""], [], [], ValueError),
+        ]
+    )
+    def test_normalize_cats_exception(self, cats, subcats, alt_subcats, exception):
+        assert_exception(api_utils.normalize_cats, exception, cats, subcats, alt_subcats)
 
 class TestMiscUtil:
     """Test miscellaneous util functions"""

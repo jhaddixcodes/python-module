@@ -180,13 +180,13 @@ class TestAsync:
             ),
             (
                 {
-                    "min_year":"not an int",
+                    "min_year": "not an int",
                 },
                 TypeError,
             ),
             (
                 {
-                    "max_year":"not an int",
+                    "max_year": "not an int",
                 },
                 TypeError,
             ),
