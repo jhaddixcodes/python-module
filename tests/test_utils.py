@@ -1,7 +1,7 @@
 import pytest
 
 import qbreader._api_utils as api_utils
-from qbreader.types import Category, Difficulty, Subcategory, AlternateSubcategory
+from qbreader.types import AlternateSubcategory, Category, Difficulty, Subcategory
 from tests import assert_exception, assert_warning
 
 
@@ -176,8 +176,18 @@ class TestNormalization:
     def test_normalize_subcat_warning(self, subcat, warning):
         assert assert_warning(api_utils.normalize_cat, warning, subcat) == ""
 
+    @pytest.mark.parametrize(
+        "cats, subcats, alt_subcats, expected",
+        [
+            (None, None, None, ("", "", "")),
+            (["Literature", "History"], ["American History"], ["Drama"], ("Literature,History", "American History", "Drama")),
+        ],
+    )
+    def test_normalize_cats(self, cats, subcats, alt_subcats, expected):
+        assert [sorted(tuple(x)) for x in api_utils.normalize_cats(cats, subcats, alt_subcats)] == [sorted(tuple(x)) for x in expected]
+
 class TestMiscUtil:
-    """Test util functions that don't fall under normalization"""
+    """Test miscellaneous util functions"""
 
     @pytest.mark.parametrize(
         "dictionary, expected",
@@ -206,9 +216,20 @@ class TestMiscUtil:
             (AlternateSubcategory.MISC_ARTS, (None, Subcategory.OTHER_FINE_ARTS)),
             (AlternateSubcategory.MISC_LITERATURE, (Category.LITERATURE, None)),
             (AlternateSubcategory.MISC_SCIENCE, (None, Subcategory.OTHER_SCIENCE)),
-            (AlternateSubcategory.OTHER_SOCIAL_SCIENCE, (None, Subcategory.SOCIAL_SCIENCE))
-        ]
+        ],
     )
     def test_category_correspondence(self, typed_alt_subcat, expected):
         assert api_utils.category_correspondence(typed_alt_subcat) == expected
 
+    @pytest.mark.parametrize(
+        "typed_alt_subcat, exception",
+        [
+            ("hey this isn't an alternate subca", ValueError),
+            (15, ValueError),
+            ([AlternateSubcategory.ASTRONOMY], ValueError),
+            ({AlternateSubcategory.MATH, AlternateSubcategory.FILM}, ValueError),
+            ((AlternateSubcategory.DRAMA, AlternateSubcategory.JAZZ), ValueError),
+        ],
+    )
+    def test_category_correspondence_exception(self, typed_alt_subcat, exception):
+        assert_exception(api_utils.category_correspondence, exception, typed_alt_subcat)

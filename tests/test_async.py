@@ -178,6 +178,18 @@ class TestAsync:
                 },
                 ValueError,
             ),
+            (
+                {
+                    "min_year":"not an int",
+                },
+                TypeError,
+            ),
+            (
+                {
+                    "max_year":"not an int",
+                },
+                TypeError,
+            ),
         ],
     )
     async def test_query_exception(
